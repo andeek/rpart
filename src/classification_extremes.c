@@ -26,7 +26,7 @@ static double *awt,
 
 static int class_of_interest;  //Ranges from 0,...,num_class-1, corresponding to 1,...,num_class
 
-int classification_extremes_init(int n, double *y[], int maxcat, char **error,
+int classification_extremes_init(int n, double **y, int maxcat, char **error,
 	      double *parm, int *size, int who, double *wt)
 {
 	//collapsing isn't possible for this method
@@ -104,7 +104,7 @@ int classification_extremes_init(int n, double *y[], int maxcat, char **error,
 	// are from 0,...,(k-1).  Hence we subtract 1 from whatever was passed.
     /* ALG 4/12/2012: Choose which impurity function to use
      */
-	class_of_interest = parm[numclass + numclass*numclass + 1]-1;
+	  class_of_interest = parm[numclass + numclass*numclass + 1]-1;
     return(0);
 }
 
@@ -129,65 +129,50 @@ double classification_extremes_pred(double *y, double *pred)
 /*
 ** 10/18/2012: Classification extremes eval: phat for class of interest.
 */
-void classification_extremes_eval(int n, double *y[], double *value, double *risk,
+void classification_extremes_eval(int n, double **y, double *value, double *risk,
 	     double *wt){
-
-    //ALG 10/16/2012
-	//first do the gini_eval stuff necessary to get the right yhat in this node.
-	// =max phat
-
-    int i,j;
-    int max = 0; //keeping track of best yhat
+    int i, j, max = 0;
+    double temp, dev = 0;
+    double prob;
     double rwt = 0;
     int  rtot = 0;
-    double total_ss, temp;  //for gini
-    double dev = 0;  //for yhat
 
-    //reset right, set frequency to 0
-    for(i=0; i<numclass; i++){
-    	right[i] = 0; //for computing gini
-    	freq[i]=0;  //for computing yhat
+   /*
+    * count up number in each class,
+    *   and P(T), the probability of reaching this branch of the tree
+    */
+    for (i = 0; i < numclass; i++)
+      freq[i] = 0;
+    temp = 0;
+    for (i = 0; i < n; i++) {
+	    j = (int) y[i][0] - 1;
+	    freq[j] += wt[i];
+	    temp += wt[i] * prior[j];
+      
+      rwt += aprior[j] * wt[i];    /*altered weight = class prior * case_weight */
+    }
+    prob = temp;                /* this is actually P(T)*n; R code will fix
+				 * it up */
+
+   /*
+    * Now compute best class and its error
+    */
+    for (i = 0; i < numclass; i++) {    /* assume class i were the prediction */
+	temp = 0;
+	for (j = 0; j < numclass; j++)
+	    temp += freq[j] * loss[i * numclass + j] * prior[j];
+	if (i == 0 || temp < dev) {
+	    max = i;
+	    dev = temp;
+	}
     }
 
-    //Gini: put everything to the right to start
-    //yhat: get correct frequencies
-    for (i=0; i<n; i++) {
-
-    	//Gini part
-    	j = *y[i] -1;   //actual value
-
-    	//remember for this method we have aprior=prior since losses are =1.
-    	rwt += aprior[j] * wt[i];    /*altered weight = class prior * case_weight */
-    	right[j] += wt[i];
-		  rtot++;
-
-		//part for computing yhat
-    	j = y[i][0] -1;
-    	freq[j] += wt[i];
-	  }
-
-
-    //Compute gini, figure out maximum class
-    for (i=0; i<numclass; i++){
-    	//Gini:
-    	temp = aprior[i] * right[i]/ rwt;      /* p(class=i, given node A) */
-
-      	//Yhat
-  		temp =0;
-  		for (j=0; j<numclass; j++) {
-  			temp += freq[j] * loss[j*numclass +i] *prior[j]; //same as freq[j]*prior[j]
-  		}
-  		//figure out if this is the best class so far.
-  		if (i==0 || temp < dev) {
-  			max =i;
-  			dev = temp;
-  		}
-    }
-
-    //record yhats
-    value[0] = max +1;    /* remember: external groups start at 1 */
-    for (i=0; i<numclass; i++) value[i+1] = freq[i]*prior[i];
-
+    value[0] = max + 1;         /* remember: external groups start at 1 */
+    for (i = 0; i < numclass; i++)
+	    value[i + 1] = freq[i];
+    value[numclass + 1] = prob;    
+    
+    
     //10/18/2012
     //the risk is just the 1-phat(class_of_interest) at this node, adjusted for priors and
     //case weights. ....higher phat --> lower risk.
@@ -228,7 +213,7 @@ void classification_extremes(int n,    double *y[],     double *x,  int numcat,
     for (i=0; i<numclass; i++) {
     	left[i] =0;
     	right[i]=0;
-	}
+	  }
     lwt =0;  rwt=0;
     rtot=0;  ltot=0;
 
@@ -237,8 +222,8 @@ void classification_extremes(int n,    double *y[],     double *x,  int numcat,
     	j = *y[i] -1;   //actual value
     	rwt += aprior[j] * wt[i];    /*altered weight = prior * case_weight */
     	right[j] += wt[i];
-		rtot++;
-	}
+		  rtot++;
+	  }
     //now rwt has total node weight including priors and observation weights.
 
     //ALG 10/18/2012: weighted proportion of class of interest in the current node.

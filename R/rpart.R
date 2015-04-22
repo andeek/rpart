@@ -313,7 +313,7 @@ rpart <-
     ans$ordered <- isord
     if (!is.null(attr(m, "na.action"))) ans$na.action <- attr(m, "na.action")
     if (!is.null(xlevels)) attr(ans, "xlevels") <- xlevels
-    if (method == "class") attr(ans, "ylevels") <- init$ylevels
+    if (method.int %in% c(3L, 7L, 8L)) attr(ans, "ylevels") <- init$ylevels
     class(ans) <- "rpart"
     ans
 }

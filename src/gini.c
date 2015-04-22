@@ -116,12 +116,12 @@ ginidev(int n, double **y, double *value, double *risk, double *wt)
     *   and P(T), the probability of reaching this branch of the tree
     */
     for (i = 0; i < numclass; i++)
-	freq[i] = 0;
+	    freq[i] = 0;
     temp = 0;
     for (i = 0; i < n; i++) {
-	j = (int) y[i][0] - 1;
-	freq[j] += wt[i];
-	temp += wt[i] * prior[j];
+	    j = (int) y[i][0] - 1;
+	    freq[j] += wt[i];
+	    temp += wt[i] * prior[j];
     }
     prob = temp;                /* this is actually P(T)*n; R code will fix
 				 * it up */
@@ -141,7 +141,7 @@ ginidev(int n, double **y, double *value, double *risk, double *wt)
 
     value[0] = max + 1;         /* remember: external groups start at 1 */
     for (i = 0; i < numclass; i++)
-	value[i + 1] = freq[i];
+	    value[i + 1] = freq[i];
     value[numclass + 1] = prob;
     *risk = dev;
 }
@@ -180,23 +180,23 @@ gini(int n, double *y[], double *x, int numcat,
     double lmean, rmean;        /* used to decide direction */
 
     for (i = 0; i < numclass; i++) {
-	left[i] = 0;
-	right[i] = 0;
+    	left[i] = 0;
+    	right[i] = 0;
     }
     lwt = 0;
     rwt = 0;
     rtot = 0;
     ltot = 0;
     for (i = 0; i < n; i++) {
-	j = (int) *y[i] - 1;
-	rwt += aprior[j] * wt[i];  /* altered weight = prior * case_weight */
-	right[j] += wt[i];
-	rtot++;
+    	j = (int) *y[i] - 1;
+    	rwt += aprior[j] * wt[i];  /* altered weight = prior * case_weight */
+    	right[j] += wt[i];
+    	rtot++;
     }
     total_ss = 0;
     for (i = 0; i < numclass; i++) {
-	temp = aprior[i] * right[i] / rwt;      /* p(class=i, given node A) */
-	total_ss += rwt * (*impurity) (temp);   /* p(A) * I(A) */
+    	temp = aprior[i] * right[i] / rwt;      /* p(class=i, given node A) */
+    	total_ss += rwt * (*impurity) (temp);   /* p(A) * I(A) */
     }
     best = total_ss;  /* total weight of right * impurity of right + 0 *0 */
 

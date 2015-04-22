@@ -21,96 +21,91 @@ rpart.class_extremes <- function(y, offset, parms, wt) {
 		      loss=matrix(rep(1,numclass^2)-diag(numclass),numclass),
 		      split=1,classOfInterest=1)
 		      warning("No classOfInterest specified, so assuming the class of interest is class 1.")
-	}
-    else if (is.list(parms)) {
-		if (is.null(names(parms))) stop("The parms list must have names")
-		temp <- pmatch(names(parms), c("prior", "loss", "split","classOfInterest"), nomatch=0L)
-		if (any(temp==0L))
+	  } else if (is.list(parms)) {
+  		if (is.null(names(parms))) stop("The parms list must have names")
+  		temp <- pmatch(names(parms), c("prior", "loss", "split","classOfInterest"), nomatch=0L)
+  		if (any(temp==0L))
 	    	stop("'parms' component not matched: ", names(parms)[temp==0L])
-	names(parms) <- c("prior", "loss", "split","classOfInterest")[temp]
+	    names(parms) <- c("prior", "loss", "split","classOfInterest")[temp]
 
 
-	# Prior:
-	if (is.null(parms$prior)) temp <- c(counts/sum(counts))
-	else {
-		#print warnings
-		warning("Passing priors and/or observations weights with class extremes
-			     finds splits with high proportion of specified class of interest
-			     weighted by prior/observation weight.")
+    	# Prior:
+    	if (is.null(parms$prior)) temp <- c(counts/sum(counts))
+    	else {
+    		#print warnings
+    		warning("Passing priors and/or observations weights with class extremes
+    			     finds splits with high proportion of specified class of interest
+    			     weighted by prior/observation weight.")
 
-	    temp <- parms$prior
-	    if (sum(temp) !=1) stop("Priors must sum to 1")
-	    if (any(temp<0)) stop("Priors must be >= 0")
-	    if (length(temp) != numclass) stop("Wrong length for priors")
+  	    temp <- parms$prior
+  	    if (sum(temp) !=1) stop("Priors must sum to 1")
+  	    if (any(temp<0)) stop("Priors must be >= 0")
+  	    if (length(temp) != numclass) stop("Wrong length for priors")
 	    }
 
 
-	# Loss matrix:
-	if (is.null(parms$loss)) temp2<- 1 - diag(numclass)
-	else {
-		  stop("Class extremes method is not defined for a loss matrix.")
-	}
+    	# Loss matrix:
+    	if (is.null(parms$loss)) temp2<- 1 - diag(numclass)
+    	else {
+    		  stop("Class extremes method is not defined for a loss matrix.")
+    	}
 
-	# Splitting rule:
-	if (is.null(parms$split)) temp3 <- 1L
- 	    else {
-			stop("Invalid 'split' parameter: class extremes does not use gini or information.")
-	}
+    	# Splitting rule:
+    	if (is.null(parms$split)) temp3 <- 1L
+     	    else {
+    			stop("Invalid 'split' parameter: class extremes does not use gini or information.")
+    	}
 
-	#now deal with the classOfInterest.
-	#no class of interest was specified:
-	if (is.null(parms$classOfInterest)){
-		warning("No classOfInterest specified, so assuming the class of interest is class 1.")
-		class_of_interest <- 1
-	}
-	#something was specified:
-    else {
-		users_requested_class <- parms$classOfInterest
-		# check only one item was passed
-		if(length(users_requested_class) > 1){
-			stop("For method='extremes' with k-class classification, must specify an integer {1,...,k}\
-			corresponding to the class of interest or the name of the level of y if y is a factor.")
-		}
+    	#now deal with the classOfInterest.
+    	#no class of interest was specified:
+    	if (is.null(parms$classOfInterest)) {
+    		warning("No classOfInterest specified, so assuming the class of interest is class 1.")
+    		class_of_interest <- 1
+    	} else {
+    	  #something was specified:
+    		users_requested_class <- parms$classOfInterest
+    		# check only one item was passed
+    		if(length(users_requested_class) > 1){
+    			stop("For method='extremes' with k-class classification, must specify an integer {1,...,k}\
+    			corresponding to the class of interest or the name of the level of y if y is a factor.")
+    		}
 
-		#check if it's a string, if so, match to levels of y.
-		if(is.character(users_requested_class)){
-			class_of_interest <- pmatch(users_requested_class, levels(fy))
-
-			#check to make sure it's not NA, if it is print an error.
-			if(is.na(class_of_interest)){
-					stop("The specified class is not in levels(y) -- this could happen \
-					if the y variable is coded as an integer rather than a factor.")
-			}
-		}
-		#not a string:
-		else{
-			classes <- (1:max(y[!is.na(y)]))
-			if(is.numeric(users_requested_class) && users_requested_class %in% classes){
-				class_of_interest <- users_requested_class
-			}
-			else{
-				stop("The specified class of interest is not valid.")
-			}
-		}
-		#end of figuring out what the class of interest is.
-	}
-	#end of dealing with classOfInterest
+    		#check if it's a string, if so, match to levels of y.
+    		if(is.character(users_requested_class)){
+    			class_of_interest <- pmatch(users_requested_class, levels(fy))
+    
+    			#check to make sure it's not NA, if it is print an error.
+    			if(is.na(class_of_interest)){
+    					stop("The specified class is not in levels(y) -- this could happen \
+    					if the y variable is coded as an integer rather than a factor.")
+    			}
+    		} else {
+    		  #not a string:
+    			classes <- (1:max(y[!is.na(y)]))
+    			if(is.numeric(users_requested_class) && users_requested_class %in% classes) {
+    				class_of_interest <- users_requested_class
+			    } else {
+				    stop("The specified class of interest is not valid.")
+			    }
+		    }
+		    #end of figuring out what the class of interest is.
+	    }
+	    #end of dealing with classOfInterest
 
 
-	#add warning about weights, if necessary.
-	if(length(unique(wt))!=1){
-		warning("Passing priors and/or observations weights with class extremes \
-			     finds splits with high proportion of specificed class of interest \
-			     weighted by prior/observation weight.")
-	}
+    	#add warning about weights, if necessary.
+    	if(length(unique(wt))!=1){
+    		warning("Passing priors and/or observations weights with class extremes \
+    			     finds splits with high proportion of specificed class of interest \
+    			     weighted by prior/observation weight.")
+	    }
 
-	parms <- list(prior=temp, loss=matrix(temp2,numclass), split=temp3,
-				classOfInterest=class_of_interest)
-	}
-    else stop("Parameter argument must be a list")
+    	parms <- list(prior=temp, loss=matrix(temp2,numclass), split=temp3,
+    				classOfInterest=class_of_interest)
+	  } else 
+      stop("Parameter argument must be a list")
 
-    list(y=y, parms=parms, numresp=numclass+1L, counts=counts,
-	 ylevels= levels(fy), numy=1L,
+    list(y=y, parms=parms, numresp=numclass+2L, counts=counts, ylevels = levels(fy), numy=1L,
 	 print = function(yval, ylevel, digits) {
 	     if (is.null(ylevel))
 		     temp <- as.character(yval[,1L])
