@@ -15,16 +15,16 @@
 
 static int    numclass;
 static double *left,     /*left branch n (weighted)*/
-	      *right,
-	      **ccnt;
+	            *right,
+	            **ccnt;
 static double *prior,
-	      *aprior,   /*altered priors */
-	      *freq,     //alg.  freq is supposed to hold the weighted number of observ. for each class
+	            *aprior,   /*altered priors */
+	            *freq,     //alg.  freq is supposed to hold the weighted number of observ. for each class
               *loss;      /* loss matrix */
 static int    *tsplit,
-	      *countn;
+	            *countn;
 static double *awt,
-	      *rate;
+	            *rate;
 
 static double (*impurity)();
 
@@ -38,17 +38,14 @@ static double gini_purity_impure(p) double p; {  return(p - p*p); }
 //Init function.  Mostly the same as the regular Gini's.
 int purity_classification_init(int n,        double **y, int maxcat, char **error,
 	     double *parm, int *size,  int who,    double *wt)
-    {
-
-	//collapsing isn't possible for this method
-	rp.collapse_is_possible = 0;
+{
 
     int i, j, k;
     double temp;
 
     /* allocate memory  and setup losses */
-    if (who==1) {
-        numclass =0;   /*number of classes */
+    if (who == 1) {
+        numclass = 0;   /*number of classes */
         for (i=0; i<n; i++){
         	if (*y[i] > numclass)  numclass = *y[i];
         }
@@ -115,80 +112,6 @@ int purity_classification_init(int n,        double **y, int maxcat, char **erro
 	return(0);
 }
 
-void purity_classification_eval(int n, double *y[], double *value, double *risk,
-	     double *wt){
-
-    //ALG 10/16/2012
-	//first do the gini_eval stuff necessary to get the right yhat in this node.
-
-    int i,j;
-    int max; //keeping track of best yhat
-    double rwt;
-    int  rtot;
-    double total_ss, temp;  //for gini
-    double dev;  //for yhat
-
-    rwt=0;
-    rtot=0;
-    dev=0;
-    max=0;
-
-    /*
-    ** count up number in each class
-    */
-
-
-    //reset right, set frequency to 0
-    for(i=0; i<numclass; i++){
-    	right[i] = 0; //for computing gini
-    	freq[i]=0;  //for computing yhat
-    }
-
-    //Gini: put everything to the right to start
-    //yhat: get correct frequencies
-    for (i=0; i<n; i++) {
-
-    	//Gini part
-    	j = *y[i] -1;   //actual value
-    	rwt += aprior[j] * wt[i];    /*altered weight = class prior * case_weight */
-    	right[j] += wt[i];
-		rtot++;
-
-		//part for computing yhat
-    	j = y[i][0] -1;
-    	freq[j] += wt[i];
-	}
-
-    total_ss =0;
-    //Compute gini, figure out maximum class
-    for (i=0; i<numclass; i++){
-    	//Gini:
-    	temp = aprior[i] * right[i]/ rwt;      /* p(class=i, given node A) */
-    	total_ss += rwt * (*impurity)(temp);    /* p(A) * I(A). this is total node weight * impur fcn */
-
-    	//Yhat
-		temp =0;
-		for (j=0; j<numclass; j++) {
-			temp += freq[j] * loss[j*numclass +i] *prior[j];
-		}
-		//figure out if this is the best class so far.
-		if (i==0 || temp < dev) {
-			max =i;
-			dev = temp;
-		}
-    }
-
-    //record yhats
-    value[0] = max +1;    /* remember: external groups start at 1 */
-    for (i=0; i<numclass; i++) value[i+1] = freq[i];
-
-    //9/19/2012
-    //Here we differ from Gini's parent_objective function in that
-    //divide by total weight to make it a 'per observation' value.
-    *risk = total_ss/rwt;
-}
-
-
 /*
 ** Prediction. straight copy of ginipred function
 ** in gini.c
@@ -203,6 +126,65 @@ double purity_classification_pred(double *y, double *pred)
     return(temp);
 }
 
+
+void purity_classification_eval(int n, double **y, double *value, double *risk,
+	     double *wt){
+
+    int i, j, max = 0;
+    double total_ss, temp, dev = 0;
+    double prob;
+    double rwt = 0;
+    int  rtot = 0;
+
+   /*
+    * count up number in each class,
+    *   and P(T), the probability of reaching this branch of the tree
+    */
+    for (i = 0; i < numclass; i++) {
+      freq[i] = 0;
+      right[i] = 0;
+    }
+      
+    temp = 0;
+    for (i = 0; i < n; i++) {
+	    j = (int) y[i][0] - 1;
+	    freq[j] += wt[i];
+	    temp += wt[i] * prior[j];
+      right[j] += wt[i];
+      rwt += aprior[j] * wt[i];
+    }
+    prob = temp;                /* this is actually P(T)*n; R code will fix
+				 * it up */
+
+   /*
+    * Now compute best class and its error
+    */
+    total_ss = 0;
+    for (i = 0; i < numclass; i++) {    /* assume class i were the prediction */
+    	temp = aprior[i] * right[i]/ rwt; 
+      total_ss += rwt * (*impurity)(temp);
+      
+      temp = 0;
+    	for (j = 0; j < numclass; j++)
+    	    temp += freq[j] * loss[i * numclass + j] * prior[j];
+    	if (i == 0 || temp < dev) {
+    	    max = i;
+    	    dev = temp;
+    	}
+    }
+
+    value[0] = max + 1;         /* remember: external groups start at 1 */
+    for (i = 0; i < numclass; i++)
+	    value[i + 1] = freq[i];
+    value[numclass + 1] = prob;
+    
+
+
+    //9/19/2012
+    //Here we differ from Gini's parent_objective function in that
+    //divide by total weight to make it a 'per observation' value.
+    *risk = total_ss/rwt;
+}
 
 
 /*
@@ -219,8 +201,8 @@ void purity_classification(int n,    double *y[],     double *x,     int numcat,
     {
     int i,j,k;
     double lwt, rwt;
-    int  rtot, ltot;
-    int    direction = LEFT, where = 0;
+    int rtot, ltot;
+    int direction = LEFT, where = 0;
     double total_ss, best, temp, p, parent_gini;
     double left_impure, right_impure;  //ALG 9/19/2012 need these so we can take min.
 
@@ -230,7 +212,7 @@ void purity_classification(int n,    double *y[],     double *x,     int numcat,
     for (i=0; i<numclass; i++) {
     	left[i] =0;
     	right[i]=0;
-	}
+	  }
     lwt =0;  rwt=0;
     rtot=0;  ltot=0;
 
@@ -239,15 +221,15 @@ void purity_classification(int n,    double *y[],     double *x,     int numcat,
     	j = *y[i] -1;   //actual value
     	rwt += aprior[j] * wt[i];    /*altered weight = prior * case_weight */
     	right[j] += wt[i];
-		rtot++;
-	}
+  		rtot++;
+  	}
 
     total_ss =0;
     for (i=0; i<numclass; i++){
     	temp = aprior[i] * right[i]/ rwt;      /* p(class=i, given node A) */
     	total_ss += rwt * (*impurity)(temp);    /* p(A) * I(A). this is total node weight * impur fcn */
-	}
-    best =total_ss/rwt; /* ALG: DIVDE BY rwt!*/
+	  }
+    best = total_ss/rwt; /* ALG: DIVDE BY rwt!*/
     parent_gini = best; /* ALG: set parent Gini*/
     /*
     ** at this point we split into 2 disjoint paths
@@ -259,13 +241,13 @@ void purity_classification(int n,    double *y[],     double *x,     int numcat,
     for (i=0;  rtot >edge; i++) {
 
     	//bookkeeping with weights.
-		j = *y[i] -1;  //the ith observation's class.
-		rwt -= aprior[j] * wt[i];
-		lwt += aprior[j] * wt[i];
-		rtot--;
-		ltot++;
-		right[j] -= wt[i];  //right[j] is weight of jth class in right node.
-		left[j]  += wt[i];
+  		j = (int)*y[i] -1;  //the ith observation's class.
+  		rwt -= aprior[j] * wt[i];
+  		lwt += aprior[j] * wt[i];
+  		rtot--;
+  		ltot++;
+  		right[j] -= wt[i];  //right[j] is weight of jth class in right node.
+  		left[j]  += wt[i];
 
 		//check to see if this is a new class and
 		//we meet the min bucket size.
@@ -293,18 +275,13 @@ void purity_classification(int n,    double *y[],     double *x,     int numcat,
 			//Set 'temp' to the minimum such value.
 			left_impure = left_impure/lwt;
 			right_impure = right_impure/rwt;
-			temp = fmin(left_impure,right_impure);
-			/* These look good.
-				Rprintf("--------left, right, temp....\n");
-				Rprintf("%lf\n",left_impure);
-				Rprintf("%lf\n",right_impure);
-				Rprintf("%lf\n",temp);
-			*/
+			temp = fmin(left_impure, right_impure);
+			
 
 			//Proceed as in gini split
 			if (temp < best) {
-				best=temp;
-				where =i;
+				best = temp;
+				where = i;
 				if (lmean < rmean) direction = LEFT;
 					else           direction = RIGHT;
 			}
@@ -314,10 +291,10 @@ void purity_classification(int n,    double *y[],     double *x,     int numcat,
     //this is the impurity of parent - min(weight(right)*Impurity(right)+weight(left)*Impurity(left)
     //The weights are btwn (0,n) not (0,1).
     *improve =  (parent_gini - best);
-    if (*improve > 0 ) {   /* found something */
+    if ( *improve > 0 ) {   /* found something */
     	csplit[0] = direction;
     	*split = (x[where] + x[where+1]) /2;
-	}
+	  }
     return;
 
 
@@ -334,7 +311,7 @@ void purity_classification(int n,    double *y[],     double *x,     int numcat,
 	}
 
     for (i=0; i<n; i++) {
-    	j = *y[i] -1;
+    	j = (int)*y[i] -1;
     	k = x[i] -1;
     	awt[k] += aprior[j] * wt[i];
     	countn[k]++;

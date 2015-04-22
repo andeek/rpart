@@ -3,7 +3,7 @@
 # but also does checking to see if we're looking for
 # high means or low means. If nothing specified,
 # use high means. 1 <==> high mean, -1 <==> low mean
-itree.regression_extremes <- function(y, offset, parms, wt) {
+rpart.regression_extremes <- function(y, offset, parms, wt) {
 
     if (!is.null(offset)){
 		y <- y-offset

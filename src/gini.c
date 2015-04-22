@@ -204,35 +204,35 @@ gini(int n, double *y[], double *x, int numcat,
      * at this point we split into 2 disjoint paths
      */
     if (numcat > 0)
-	goto categorical;
+	    goto categorical;
 
     for (i = 0; rtot > edge; i++) {
-	j = (int) *y[i] - 1;
-	rwt -= aprior[j] * wt[i];
-	lwt += aprior[j] * wt[i];
-	rtot--;
-	ltot++;
-	right[j] -= wt[i];
-	left[j] += wt[i];
+    	j = (int) *y[i] - 1;
+    	rwt -= aprior[j] * wt[i];
+    	lwt += aprior[j] * wt[i];
+    	rtot--;
+    	ltot++;
+    	right[j] -= wt[i];
+    	left[j] += wt[i];
 
-	if (ltot >= edge && x[i + 1] != x[i]) {
-	    temp = 0;
-	    lmean = 0;
-	    rmean = 0;
-	    for (j = 0; j < numclass; j++) {
-		p = aprior[j] * left[j] / lwt;  /* p(j | left) */
-		temp += lwt * (*impurity) (p);  /* p(left) * I(left) */
-		lmean += p * j;
-		p = aprior[j] * right[j] / rwt; /* p(j | right) */
-		temp += rwt * (*impurity) (p);  /* p(right) * I(right) */
-		rmean += p * j;
+    	if (ltot >= edge && x[i + 1] != x[i]) {
+    	    temp = 0;
+    	    lmean = 0;
+    	    rmean = 0;
+    	    for (j = 0; j < numclass; j++) {
+        		p = aprior[j] * left[j] / lwt;  /* p(j | left) */
+        		temp += lwt * (*impurity) (p);  /* p(left) * I(left) */
+        		lmean += p * j;
+        		p = aprior[j] * right[j] / rwt; /* p(j | right) */
+        		temp += rwt * (*impurity) (p);  /* p(right) * I(right) */
+        		rmean += p * j;
+    	    }
+    	    if (temp < best) {
+        		best = temp;
+        		where = i;
+        		direction = lmean < rmean ? LEFT : RIGHT;
+    	    }
 	    }
-	    if (temp < best) {
-		best = temp;
-		where = i;
-		direction = lmean < rmean ? LEFT : RIGHT;
-	    }
-	}
     }
 
     *improve = total_ss - best;
@@ -248,77 +248,77 @@ categorical:;
      *  ccnt[i][j] = number of class i obs, category j of the predictor
      */
     for (j = 0; j < numcat; j++) {
-	awt[j] = 0;
-	countn[j] = 0;
-	for (i = 0; i < numclass; i++)
-	    ccnt[i][j] = 0;
+    	awt[j] = 0;
+    	countn[j] = 0;
+    	for (i = 0; i < numclass; i++)
+    	    ccnt[i][j] = 0;
     }
     for (i = 0; i < n; i++) {
-	j = (int) *y[i] - 1;
-	k = (int) x[i] - 1;
-	awt[k] += aprior[j] * wt[i];
-	countn[k]++;
-	ccnt[j][k] += wt[i];
+    	j = (int) *y[i] - 1;
+    	k = (int) x[i] - 1;
+    	awt[k] += aprior[j] * wt[i];
+    	countn[k]++;
+    	ccnt[j][k] += wt[i];
     }
 
     for (i = 0; i < numcat; i++) {
-	if (awt[i] == 0)
-	    tsplit[i] = 0;
-	else {
-	    rate[i] = ccnt[0][i] / awt[i];      /* a scratch array */
-	    tsplit[i] = RIGHT;
-	}
+    	if (awt[i] == 0)
+    	    tsplit[i] = 0;
+    	else {
+    	    rate[i] = ccnt[0][i] / awt[i];      /* a scratch array */
+    	    tsplit[i] = RIGHT;
+    	}
     }
 
     if (numclass == 2)
-	graycode_init2(numcat, countn, rate);
+	    graycode_init2(numcat, countn, rate);
     else
-	graycode_init1(numcat, countn);
+	    graycode_init1(numcat, countn);
 
     while ((i = graycode()) < numcat) {
        /* item i changes groups */
-	if (tsplit[i] == LEFT) {
-	    tsplit[i] = RIGHT;
-	    rwt += awt[i];
-	    lwt -= awt[i];
-	    rtot += countn[i];
-	    ltot -= countn[i];
-	    for (j = 0; j < numclass; j++) {
-		right[j] += ccnt[j][i];
-		left[j] -= ccnt[j][i];
-	    }
-	} else {
-	    tsplit[i] = LEFT;
-	    rwt -= awt[i];
-	    lwt += awt[i];
-	    rtot -= countn[i];
-	    ltot += countn[i];
-	    for (j = 0; j < numclass; j++) {
-		right[j] -= ccnt[j][i];
-		left[j] += ccnt[j][i];
-	    }
-	}
+    	if (tsplit[i] == LEFT) {
+    	    tsplit[i] = RIGHT;
+    	    rwt += awt[i];
+    	    lwt -= awt[i];
+    	    rtot += countn[i];
+    	    ltot -= countn[i];
+    	    for (j = 0; j < numclass; j++) {
+        		right[j] += ccnt[j][i];
+        		left[j] -= ccnt[j][i];
+    	    }
+      } else {
+  	    tsplit[i] = LEFT;
+  	    rwt -= awt[i];
+  	    lwt += awt[i];
+  	    rtot -= countn[i];
+  	    ltot += countn[i];
+  	    for (j = 0; j < numclass; j++) {
+      		right[j] -= ccnt[j][i];
+      		left[j] += ccnt[j][i];
+  	    }
+  	  }
 
-	if (ltot >= edge && rtot >= edge) {
-	    temp = 0;
-	    lmean = 0;
-	    rmean = 0;
-	    for (j = 0; j < numclass; j++) {
-		p = aprior[j] * left[j] / lwt;
-		temp += lwt * (*impurity) (p);
-		lmean += p * j;
-		p = aprior[j] * right[j] / rwt; /* p(j | right) */
-		temp += rwt * (*impurity) (p);  /* p(right) * I(right) */
-		rmean += p * j;
-	    }
-	    if (temp < best) {
-		best = temp;
-		if (lmean < rmean)
-		    for (j = 0; j < numcat; j++) csplit[j] = tsplit[j];
-		else
-		    for (j = 0; j < numcat; j++) csplit[j] = -tsplit[j];
-	    }
-	}
+	    if (ltot >= edge && rtot >= edge) {
+  	    temp = 0;
+  	    lmean = 0;
+  	    rmean = 0;
+  	    for (j = 0; j < numclass; j++) {
+      		p = aprior[j] * left[j] / lwt;
+      		temp += lwt * (*impurity) (p);
+      		lmean += p * j;
+      		p = aprior[j] * right[j] / rwt; /* p(j | right) */
+      		temp += rwt * (*impurity) (p);  /* p(right) * I(right) */
+      		rmean += p * j;
+	      }
+	      if (temp < best) {
+		      best = temp;
+      		if (lmean < rmean)
+      		    for (j = 0; j < numcat; j++) csplit[j] = tsplit[j];
+      		else
+      		    for (j = 0; j < numcat; j++) csplit[j] = -tsplit[j];
+  	    }
+  	  }
     }
     *improve = total_ss - best;
 }

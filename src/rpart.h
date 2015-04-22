@@ -69,16 +69,6 @@ EXTERN struct {
     int *csplit;
     int *left;
     int *right;
-    int    *featvec;  	/* ALG 1/16/2012: vector of length nvar to pass to nodes to keep track of split criteria */
-    double *splitparams; /* ALG 1/21/2012: vector with parameters needed for path-dependent split criteria */
-    double root_objective_scaling;  //ALG 5/1/2012. Value we scale improve by for the root node. Used for scaling if impscale=root.
-    int method_number; /*ALG 3/5/2012: which split method*/
-    int impscale_number;/*ALG 4/27/2012*/
-    int penalty_number;/*ALG 4/27/2012*/
-    int max_depth;  //most number of splits
-    double *dummy;   //ALG 7/19/2012. for consistency we need to pass a dummy double pointer sometimes
-    //double split_check_offset; //4/28/2012: added so that we can insure cp doesn't matter for some methods
-    int collapse_is_possible;
 } rp;
 
 EXTERN struct cptable *cptable_tail;

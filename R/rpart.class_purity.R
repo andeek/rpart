@@ -58,8 +58,7 @@ rpart.class_purity <- function(y, offset, parms, wt) {
 	}
     else stop("Parameter argument must be a list")
 
-    list(y=y, parms=parms, numresp=numclass+1L, counts=counts,
-	 ylevels= levels(fy), numy=1L,
+    list(y=y, parms = parms, numresp = numclass + 2L, counts=counts, ylevels= levels(fy), numy=1L,
 	 print = function(yval, ylevel, digits) {
 	     if (is.null(ylevel))
 		     temp <- as.character(yval[,1L])

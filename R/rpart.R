@@ -190,7 +190,6 @@ rpart <-
                    wt,
                    as.integer(init$numy),
                    as.double(cost))
-
     nsplit <- nrow(rpfit$isplit) # total number of splits, primary and surrogate
     ## total number of categorical splits
     ncat <- if (!is.null(rpfit$csplit)) nrow(rpfit$csplit) else 0L

@@ -94,14 +94,6 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
      * set some other parameters
      */
      
-    rp.collapse_is_possible = 1; //most methods this is possible, where it's not this is fixed in the init fcn.
-    rp.max_depth = 32;
-    int temp2[rp.max_depth];  /* ALG 1/16/2012:  initial vector for variables_used */
-
-
-    
-     
-     
      
     dptr = REAL(opt2);
     rp.min_node = (int) dptr[1];
@@ -125,12 +117,6 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     rp.vcost = REAL(cost2);
     
     
-    /*
-     * ALG 2/11/2012: set rp.splitparams
-     */
-    rp.splitparams = (double *)ALLOC(2, sizeof(double *));
-    rp.splitparams[0] = dptr[9];  //alpha
-    rp.splitparams[1] = dptr[10];  //beta
     
     /*
      * create the "ragged array" pointers to the matrix
@@ -215,11 +201,6 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     for (i = 0; i < n; i++) {
 	    rp.which[i] = 1;
 	    temp += wt[i];
-    }
-    
-    /* ALG: haven't split on anything so far... */
-    for (i=0; i< rp.max_depth; i++){
-      temp2[i] = -1;
     }
     
     i = (*rp_init) (n, rp.ydata, maxcat, &errmsg, parms, &rp.num_resp, 1, wt);

@@ -13,25 +13,22 @@
 
 static int    numclass;
 static double *left,     /*left branch n (weighted)*/
-	      *right,
-	      **ccnt;
+	            *right,
+	            **ccnt;
 static double *prior,
-	      *aprior,   /*altered priors */
-	      *freq,     //alg.  freq is supposed to hold the weighted number of observ. for each class
+	            *aprior,   /*altered priors */
+	            *freq,     //alg.  freq is supposed to hold the weighted number of observ. for each class
               *loss;      /* loss matrix */
-static int    *tsplit,
-	      *countn;
+static int *tsplit,
+	         *countn;
 static double *awt,
-	      *rate;
+	            *rate;
 
 static int class_of_interest;  //Ranges from 0,...,num_class-1, corresponding to 1,...,num_class
 
 int classification_extremes_init(int n, double **y, int maxcat, char **error,
 	      double *parm, int *size, int who, double *wt)
 {
-	//collapsing isn't possible for this method
-	rp.collapse_is_possible = 0;
-
     int i, j, k;
     double temp;
 
@@ -190,16 +187,15 @@ void classification_extremes_eval(int n, double **y, double *value, double *risk
 **     we leave it in the code in case I think of a way to modify this later.
 **
 */
-void classification_extremes(int n,    double *y[],     double *x,  int numcat,
+void classification_extremes(int n, double *y[], double *x, int numcat,
 	   int edge, double *improve, double *split, int *csplit,
-	   double myrisk, double *wt)
+	   double my_risk, double *wt)
 {
-    int i,j,k;
+    int i, j, k;
     double lwt, rwt;
-    int  rtot, ltot;
-    int    direction = LEFT, where = 0;
-    double total_ss, best, temp, p;
-
+    int rtot, ltot;
+    int direction = LEFT, where = 0;
+    double best, temp, p;
     double lmean, rmean;    /* used to decide direction */
 
     //ALG: 10/18/2012
@@ -211,15 +207,17 @@ void classification_extremes(int n,    double *y[],     double *x,  int numcat,
 
     //reset right & left counts of y classes
     for (i=0; i<numclass; i++) {
-    	left[i] =0;
-    	right[i]=0;
+    	left[i] = 0;
+    	right[i]= 0;
 	  }
-    lwt =0;  rwt=0;
-    rtot=0;  ltot=0;
+    lwt = 0;  
+    rwt = 0;
+    rtot= 0;  
+    ltot = 0;
 
     //put everything to the right to start
-    for (i=0; i<n; i++) {
-    	j = *y[i] -1;   //actual value
+    for (i = 0; i < n; i++) {
+    	j = (int) *y[i] - 1;   //actual value
     	rwt += aprior[j] * wt[i];    /*altered weight = prior * case_weight */
     	right[j] += wt[i];
 		  rtot++;
@@ -229,14 +227,15 @@ void classification_extremes(int n,    double *y[],     double *x,  int numcat,
     //ALG 10/18/2012: weighted proportion of class of interest in the current node.
     class_of_interest_prop = right[class_of_interest]*aprior[class_of_interest]/rwt;
     best = class_of_interest_prop; //what we need to beat in order to split.
+    
     /*
     ** at this point we split into 2 disjoint paths
     */
     if (numcat >0) goto categorical;
 
     //cts predictor
-    for (i=0;  rtot >edge; i++) { //as we increment i, we take from right and put in left.
-    	j = *y[i] -1; //class of this observation
+    for (i = 0; rtot > edge; i++) { //as we increment i, we take from right and put in left.
+    	j = (int) *y[i] - 1; //class of this observation
     	rwt -= aprior[j] * wt[i];
     	lwt += aprior[j] * wt[i];
     	rtot--;
@@ -244,43 +243,45 @@ void classification_extremes(int n,    double *y[],     double *x,  int numcat,
     	right[j] -= wt[i];
     	left[j]  += wt[i];
 
-		if (x[i+1] != x[i] &&  (ltot>=edge)) { //are we allowed to split here?
-			temp =0; lmean =0; rmean =0;
-
-			//class of interest left and right
-			left_prop  = left[class_of_interest]*aprior[class_of_interest]/lwt;
-			right_prop = right[class_of_interest]*aprior[class_of_interest]/rwt;
-
-			//we want the max value..
-			temp = fmax(left_prop, right_prop);
-
-			//book-keeping for left and right decision
-			for (j=0; j<numclass; j++) { //now interate through the classes
-				p = aprior[j]*left[j]/lwt;    /* p(j | left) */
-				lmean += p*j;
-				p =  aprior[j]*right[j]/rwt;   /* p(j | right) */
-				rmean += p*j;
-			}
-			if (temp > best) {
-					best=temp;
-					where =i;
-					if (lmean < rmean){
-						direction = LEFT;
-					}
-					else{
-						direction = RIGHT;
-					}
-				}
+		  if (x[i + 1] != x[i] &&  (ltot>=edge)) { //are we allowed to split here?
+  			temp = 0; 
+        lmean = 0; 
+        rmean = 0;
+  
+  			//class of interest left and right
+  			left_prop  = left[class_of_interest]*aprior[class_of_interest]/lwt;
+  			right_prop = right[class_of_interest]*aprior[class_of_interest]/rwt;
+  
+  			//we want the max value..
+  			temp = fmax(left_prop, right_prop);
+  
+  			//book-keeping for left and right decision
+  			for (j=0; j<numclass; j++) { //now interate through the classes
+  				p = aprior[j]*left[j]/lwt;    /* p(j | left) */
+  				lmean += p*j;
+  				p =  aprior[j]*right[j]/rwt;   /* p(j | right) */
+  				rmean += p*j;
+  			}
+  			if (temp > best) {
+  					best = temp;
+  					where = i;
+  					if (lmean < rmean){
+  						direction = LEFT;
+  					}
+  					else{
+  						direction = RIGHT;
+  					}
+  				}
 			}
 		}//end of for loop
 
     //To redefine as impurity where higher is worse, we set it to 1-p_hat, and so
     //to fit in the previous context: (1-parent_prop) - (1- best_prop)
-    *improve =  (1- class_of_interest_prop) - (1 - best);
+    *improve =  (1 - class_of_interest_prop) - (1 - best);
     if (*improve > 0 ) {   /* found something */
     	csplit[0] = direction;
     	*split = (x[where] + x[where+1]) /2;
-	}
+	  }
     return; //end of cts predictor.
 
 categorical:;
@@ -289,79 +290,79 @@ categorical:;
     **  ccnt[i][j] = number of class i obs, category j of the predictor
     */
     for (j=0; j<numcat; j++) {
-	awt[j] =0;
-	countn[j]=0;
-	for (i=0; i<numclass; i++)
-	    ccnt[i][j] =0;
-	}
+    	awt[j] =0;
+    	countn[j]=0;
+    	for (i=0; i<numclass; i++)
+    	    ccnt[i][j] =0;
+  	}
     for (i=0; i<n; i++) {
-	j = *y[i] -1;
-	k = x[i] -1;
-	awt[k] += aprior[j] * wt[i];
-	countn[k]++;
-	ccnt[j][k] += wt[i];
-	}
+    	j = *y[i] -1;
+    	k = x[i] -1;
+    	awt[k] += aprior[j] * wt[i];
+    	countn[k]++;
+    	ccnt[j][k] += wt[i];
+	  }
 
     for (i=0; i<numcat; i++){
-	if (awt[i]==0) tsplit[i] =0;
-	else {
-	    rate[i] = ccnt[0][i] / awt[i];   /* a scratch array */
-	    tsplit[i]=RIGHT;
+	    if (awt[i]==0) tsplit[i] =0;
+	    else {
+  	    rate[i] = ccnt[0][i] / awt[i];   /* a scratch array */
+  	    tsplit[i]=RIGHT;
 	    }
-        }
+    }
 
     if (numclass==2) graycode_init2(numcat, countn, rate);
-                else graycode_init1(numcat, countn);
+    else graycode_init1(numcat, countn);
 
     while((i=graycode()) < numcat) {
-	/* item i changes groups */
-	if (tsplit[i]==LEFT) {
-	    tsplit[i]=RIGHT;
-	    rwt  += awt[i];
-	    lwt -= awt[i];
-	    rtot += countn[i];
-	    ltot -= countn[i];
-	    for (j=0; j<numclass; j++) {
-		right[j] += ccnt[j][i];
-		left[j]  -= ccnt[j][i];
-    	        }
+    	/* item i changes groups */
+    	if (tsplit[i]==LEFT) {
+    	    tsplit[i]=RIGHT;
+    	    rwt  += awt[i];
+    	    lwt -= awt[i];
+    	    rtot += countn[i];
+    	    ltot -= countn[i];
+    	    for (j=0; j<numclass; j++) {
+    		    right[j] += ccnt[j][i];
+    		    left[j]  -= ccnt[j][i];
+	        }
+	    } 
+      else {
+  	    tsplit[i]=LEFT;
+  	    rwt -= awt[i];
+  	    lwt += awt[i];
+  	    rtot -= countn[i];
+  	    ltot += countn[i];
+  	    for (j=0; j<numclass; j++) {
+  		    right[j] -= ccnt[j][i];
+  		    left[j]  += ccnt[j][i];
+  	    }
 	    }
-	else {
-	    tsplit[i]=LEFT;
-	    rwt -= awt[i];
-	    lwt += awt[i];
-	    rtot -= countn[i];
-	    ltot += countn[i];
-	    for (j=0; j<numclass; j++) {
-		right[j] -= ccnt[j][i];
-		left[j]  += ccnt[j][i];
-	    }
-	}
 
-	if (ltot>=edge  &&  rtot>=edge) { //ALG: adjustments can go here.
-	    temp =0;
-	    lmean=0; rmean =0;
+    	if (ltot>=edge  &&  rtot>=edge) { //ALG: adjustments can go here.
+    	    temp =0;
+    	    lmean=0; rmean =0;
 
-	    //figure out the proportion of class of interest left and right
-		left_prop  = left[class_of_interest]*aprior[class_of_interest]/lwt;
-		right_prop = right[class_of_interest]*aprior[class_of_interest]/rwt;
+	        //figure out the proportion of class of interest left and right
+      		left_prop  = left[class_of_interest]*aprior[class_of_interest]/lwt;
+      		right_prop = right[class_of_interest]*aprior[class_of_interest]/rwt;
 
-		//we want the max value..
-		temp = fmax(left_prop, right_prop);
+      		//we want the max value..
+      		temp = fmax(left_prop, right_prop);
 
-	    //right left book-keeping
-	    for (j=0; j<numclass; j++) {
-			p = aprior[j]*left[j] /lwt;
-			lmean += p*j;
-			p =  aprior[j]*right[j]/rwt;       /* p(j | right) */
-			rmean += p*j;
-	    }
-	    if (temp > best) {
-	    	best=temp;
-		if (lmean < rmean)
-			for (j=0; j<numcat; j++) csplit[j] = tsplit[j];
-		else
-			for (j=0; j<numcat; j++) csplit[j] = -tsplit[j];
+    	    //right left book-keeping
+    	    for (j=0; j<numclass; j++) {
+    			  p = aprior[j]*left[j] /lwt;
+    			  lmean += p*j;
+    			  p =  aprior[j]*right[j]/rwt;       /* p(j | right) */
+    			  rmean += p*j;
+    	    }
+    	    if (temp > best) {
+    	    	best=temp;
+		        if (lmean < rmean)
+			        for (j=0; j<numcat; j++) csplit[j] = tsplit[j];
+	        	else
+			        for (j=0; j<numcat; j++) csplit[j] = -tsplit[j];
 	        }
 	    }//end of loop through observations.
     }//end of while loop
