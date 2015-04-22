@@ -12,6 +12,7 @@
 #include "rpart.h"
 #include "node.h"
 #include "rpartproto.h"
+#include <math.h>  //for infinity
 
 int
 partition(int nodenum, pNode splitnode, double *sumrisk, int n1, int n2)
@@ -154,22 +155,46 @@ partition(int nodenum, pNode splitnode, double *sumrisk, int n1, int n2)
     }
     me->complexity = (me->risk - (left_risk + right_risk)) /
 	(left_split + right_split + 1);
+    
+    if(!rp.collapse_is_possible){  //one sided criteria
+      double mm;
+    	mm =fmin(left_risk, right_risk);
+    	me->complexity = (me->risk - mm)/(left_split + right_split +1);
+    }
 
+
+	//3/18/2013: added second condition
     if (me->complexity <= rp.alpha) {
-	/*
-	 * All was in vain!  This node doesn't split after all.
-	 */
-	free_tree(me, 0);
-	*sumrisk = me->risk;
-	for (i = n1; i < n2; i++) {
-	    j = rp.sorts[0][i];
-	    if (j < 0)
-		j = -(1 + j);
-	    rp.which[j] = nodenum;      /* revert to the old nodenumber */
-	}
-	return 0;               /* return # of splits */
+      /*
+      * All was in vain!  This node doesn't split after all.
+	    */
+      if(!rp.collapse_is_possible) {
+	
+    	  free_tree(me->leftson, 1);
+      	free_tree(me->rightson,1);
+    		me->leftson = (pNode)  NULL;
+    		me->rightson= (pNode)  NULL;
+        *sumrisk = me->risk;
+  	    return(0);
+      } 
+      else {
+        free_tree(me, 0);
+        *sumrisk = me->risk;
+        for (i = n1; i < n2; i++) {
+      	    j = rp.sorts[0][i];
+      	    if (j < 0)
+      		j = -(1 + j);
+      	    rp.which[j] = nodenum;      /* revert to the old nodenumber */
+      	} 
+      	return 0;    
+      }
+                 /* return # of splits */
     } else {
-	*sumrisk = left_risk + right_risk;
-	return left_split + right_split + 1;
+	    *sumrisk = left_risk + right_risk;
+  
+      if(!rp.collapse_is_possible){
+            *sumrisk = fmin(left_risk, right_risk);
+      }
+	    return left_split + right_split + 1;
     }
 }

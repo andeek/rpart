@@ -94,7 +94,7 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
      * set some other parameters
      */
      
-     
+    rp.collapse_is_possible = 1; 
     dptr = REAL(opt2);
     rp.min_node = (int) dptr[1];
     rp.min_split = (int) dptr[0];

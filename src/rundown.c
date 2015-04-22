@@ -36,7 +36,7 @@ oops:;
     if (rp.usesurrogate < 2) {  /* must have hit a missing value */
 	for (; i < rp.num_unique_cp; i++)
 	    xpred[i] = otree->response_est[0];
-	xtemp[i] = (*rp_error) (rp.ydata[obs2], otree->response_est);
+	    xtemp[i] = (*rp_error) (rp.ydata[obs2], otree->response_est);
 	return;
     }
     /*

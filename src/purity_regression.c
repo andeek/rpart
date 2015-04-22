@@ -18,6 +18,8 @@ static int *tsplit;
 int purity_regression_init(int n,        double *y[],  int maxcat, char **error,
 	      double *parm, int *size,    int who,    double *wt)
  {
+   
+   rp.collapse_is_possible = 0;
 
     if (who==1 && maxcat >0) {
 	graycode_init0(maxcat);

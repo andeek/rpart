@@ -39,6 +39,8 @@ static double gini_purity_impure(p) double p; {  return(p - p*p); }
 int purity_classification_init(int n,        double **y, int maxcat, char **error,
 	     double *parm, int *size,  int who,    double *wt)
 {
+  
+    rp.collapse_is_possible = 0;
 
     int i, j, k;
     double temp;

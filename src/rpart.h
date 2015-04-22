@@ -69,6 +69,7 @@ EXTERN struct {
     int *csplit;
     int *left;
     int *right;
+    int collapse_is_possible;  /*for one sided methods */
 } rp;
 
 EXTERN struct cptable *cptable_tail;

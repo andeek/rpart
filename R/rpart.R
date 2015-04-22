@@ -271,7 +271,7 @@ rpart <-
         numclass <- init$numresp - 2L
         nodeprob <- rpfit$dnode[, numclass + 5L] / sum(wt) # see ginidev.c
         temp <- pmax(1L, init$counts)   # overall class freq in data
-        temp <- rpfit$dnode[, 4L + (1L:numclass)] %*% diag(init$parms$prior/temp)
+        temp <- if(length(init$parms) > 1) rpfit$dnode[, 4L + (1L:numclass)] %*% diag(init$parms$prior/temp) else rpfit$dnode[, 4L + (1L:numclass)] %*% diag(init$parms$prior/temp, nrow = 1)
         yprob <- temp /rowSums(temp)    # necessary with altered priors
         yval2 <- matrix(rpfit$dnode[, 4L + (0L:numclass)], ncol = numclass + 1L)
 	frame$yval2 <- cbind(yval2, yprob, nodeprob)

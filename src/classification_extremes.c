@@ -29,6 +29,7 @@ static int class_of_interest;  //Ranges from 0,...,num_class-1, corresponding to
 int classification_extremes_init(int n, double **y, int maxcat, char **error,
 	      double *parm, int *size, int who, double *wt)
 {
+    rp.collapse_is_possible = 0;
     int i, j, k;
     double temp;
 
@@ -243,7 +244,7 @@ void classification_extremes(int n, double *y[], double *x, int numcat,
     	right[j] -= wt[i];
     	left[j]  += wt[i];
 
-		  if (x[i + 1] != x[i] &&  (ltot>=edge)) { //are we allowed to split here?
+		  if (x[i + 1] != x[i] &&  ltot >= edge) { //are we allowed to split here?
   			temp = 0; 
         lmean = 0; 
         rmean = 0;
@@ -296,7 +297,7 @@ categorical:;
     	    ccnt[i][j] =0;
   	}
     for (i=0; i<n; i++) {
-    	j = *y[i] -1;
+    	j = (int)*y[i] -1;
     	k = x[i] -1;
     	awt[k] += aprior[j] * wt[i];
     	countn[k]++;
@@ -358,7 +359,7 @@ categorical:;
     			  rmean += p*j;
     	    }
     	    if (temp > best) {
-    	    	best=temp;
+    	    	best = temp;
 		        if (lmean < rmean)
 			        for (j=0; j<numcat; j++) csplit[j] = tsplit[j];
 	        	else
