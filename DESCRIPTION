@@ -1,4 +1,4 @@
-Package: rpartee
+Package: rpart
 Version: 0.0.0.9000
 Date: 2015-04-24 
 Authors@R: c(person("Andee", "Kaplan", role = "aut", email = "ajkaplan@iastate.edu", comment = "rpartee modifications"),

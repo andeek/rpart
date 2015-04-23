@@ -1,4 +1,4 @@
-.onUnload <- function(libpath) library.dynam.unload("rpartee", libpath)
+.onUnload <- function(libpath) library.dynam.unload("rpart", libpath)
 
 .noGenerics <- TRUE
 

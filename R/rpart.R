@@ -178,7 +178,7 @@ rpart <-
     storage.mode(wt) <- "double"
     temp <- as.double(unlist(init$parms))
     if (!length(temp)) temp <- 0    # if parms is NULL pass a dummy
-    rpfit <- .Call("C_rpart",
+    rpfit <- .Call(C_rpart,
                    ncat = as.integer(cats * !isord),
                    method = as.integer(method.int),
                    as.double(unlist(controls)),
