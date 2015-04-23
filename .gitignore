@@ -12,3 +12,6 @@
 vignettes/*.html
 vignettes/*.pdf
 .Rproj.user
+*.Rproj
+
+.DS_Store
